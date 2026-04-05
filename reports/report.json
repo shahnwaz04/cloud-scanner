@@ -1,0 +1,23 @@
+{
+    "account_id": "921804430571",
+    "region": "eu-north-1",
+    "scan_time": "2026-02-25T18:10:20.731806+00:00",
+    "summary": {
+        "HIGH": 1,
+        "CRITICAL": 1
+    },
+    "findings": [
+        {
+            "service": "IAM",
+            "resource": "scanner-user",
+            "issue": "User does not have MFA enabled",
+            "severity": "HIGH"
+        },
+        {
+            "service": "S3",
+            "resource": "birthdaywishesportal",
+            "issue": "Bucket has public policy",
+            "severity": "CRITICAL"
+        }
+    ]
+}
