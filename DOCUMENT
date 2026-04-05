@@ -1,0 +1,48 @@
+// Install AWS CLI using pip
+boto3
+instlled pip install awscli --upgrade --user
+awscli  --version       
+awscli/1.27.28 Python/3.12.6 Linux/5.15.0-1031-azure botocore/1.30.28
+
+
+// Configure AWS CLI with your credentials and default region
+python -m awscli configure set aws_access_key_id YOUR_ACCESS_KEY
+python -m awscli configure set aws_secret_access_key YOUR_SECRET_KEY    
+python -m awscli configure set default.region YOUR_REGION
+python -m awscli configure set default.output json
+aws s3 cp s3://your-bucket-name/your-file.txt /local/path/your-file.txt
+
+
+// Use AWS CLI to interact with AWS services
+python -m awscli iam list-users     to list all IAM users in your AWS account.
+python -m awscli s3 ls               to list all S3 buckets in your AWS account 
+python -m awscli s3 cp /local/path/your-file.txt s3://your-bucket-name/your-file.txt     to upload a file to an S3 bucket.
+python -m awscli s3 cp s3://your-bucket-name/your-file.txt
+/local/path/your-file.txt     to download a file from an S3 bucket.
+python -m awscli s3 rm s3://your-bucket-name/your-file.txt     to delete a file from an S3 bucket.
+python -m awscli s3 sync /local/directory/ s3://your-bucket-name/directory/     to synchronize a local directory with an S3 bucket.
+python -m awscli s3 sync s3://your-bucket-name/directory/ /local/directory/     to synchronize an S3 bucket with a local directory.
+python -m awscli s3 ls s3://your-bucket-name/     to list the contents of an S3 bucket.
+python -m awscli s3 ls s3://your-bucket-name/ --recursive
+        to list the contents of an S3 bucket recursively.   
+python -m awscli s3api list-buckets     to list all S3 buckets in your AWS account using the S3 API.
+python -m awscli s3api create-bucket --bucket your-bucket-name --region your-region     to create a new S3 bucket using the S3 API.
+python -m awscli s3api delete-bucket --bucket your-bucket-name     to delete an S3 bucket using the S3 API.
+python -m awscli s3api list-objects --bucket your-bucket-name     to list the objects in an S3 bucket using the S3 API.
+
+
+// Run your Python script that uses boto3 to interact with AWS services
+python main.py
+
+
+// Install dependencies for your Python project  for dockerization  If uvicorn is missing → container will fail.
+
+fastapi
+uvicorn
+boto3
+botocore
+
+
+// Build a Docker image for your Python application
+docker build -t cloud-security-scanner .
+

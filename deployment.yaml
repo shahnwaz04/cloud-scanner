@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aws-scanner-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aws-scanner
+  template:
+    metadata:
+      labels:
+        app: aws-scanner
+    spec:
+      containers:
+        - name: aws-scanner
+          image: aws-scanner
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000

@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+boto3
+botocore
+reportlab
+azure-identity
+azure-mgmt-network
+azure-mgmt-storage
+google-auth
+google-cloud-compute
+google-cloud-storage
