@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureCloud Platform</title>
+    <link rel="stylesheet" href="/static/style.css?v=20260329-3">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">SC</div>
+                <div>
+                    <p class="eyebrow">Cloud Security Scanner</p>
+                    <h1>SecureCloud</h1>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav" aria-label="Primary">
+                <button id="navDashboard" class="nav-link active" type="button" onclick="showDashboard()">
+                    <span class="nav-label">Dashboard</span>
+                    <span class="nav-meta">Live posture</span>
+                </button>
+                <button id="navHistory" class="nav-link" type="button" onclick="showHistory()">
+                    <span class="nav-label">Scan History</span>
+                    <span class="nav-meta">Recent runs</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-note">
+                <p class="eyebrow">Monitoring</p>
+                <strong>Real-time visibility</strong>
+                <p>Track misconfigurations, risk trends, and service exposure from one place.</p>
+            </div>
+        </aside>
+
+        <main class="content">
+            <header class="hero">
+                <div class="hero-copy">
+                    <p class="eyebrow">Multi-Cloud Security Posture</p>
+                    <h2>See risk fast, then act on the findings that matter most.</h2>
+                    <p class="hero-text">
+                        Run a fresh scan, review severity trends, and inspect service-level findings without losing context.
+                    </p>
+                </div>
+
+                <div class="hero-actions">
+                    <button class="secondary-btn" type="button" onclick="openCloudModal()">Connect Cloud</button>
+                    <button class="primary-btn" type="button" onclick="triggerScan()">Run New Scan</button>
+                    <div class="hero-status">
+                        <span id="statusIndicator" class="status-pill status-live">Live</span>
+                        <div class="status-copy">
+                            <span class="status-label">Last scan</span>
+                            <strong id="lastScan">Waiting for data</strong>
+                        </div>
+                    </div>
+                    <div class="cloud-session">
+                        <span class="status-label">Cloud session</span>
+                        <strong id="cloudConnectionStatus">Not connected</strong>
+                    </div>
+                </div>
+            </header>
+
+            <div class="mobile-nav" aria-label="Section tabs">
+                <button id="mobileNavDashboard" class="mobile-tab active" type="button" onclick="showDashboard()">Dashboard</button>
+                <button id="mobileNavHistory" class="mobile-tab" type="button" onclick="showHistory()">History</button>
+            </div>
+
+            <div id="loader" class="loader hidden" role="status" aria-live="polite">
+                <span class="loader-dot"></span>
+                Scanning cloud resources and updating the dashboard...
+            </div>
+
+            <section id="dashboardSection">
+                <div class="summary-grid">
+                    <article class="metric-card metric-card-primary">
+                        <div class="metric-header">
+                            <span class="metric-label">Risk Score</span>
+                            <span class="info-icon" tabindex="0"
+                                data-tooltip="Risk Score = 100 - (CRITICAL x 10 + HIGH x 6 + MEDIUM x 3). Higher means a more secure account.">i</span>
+                        </div>
+                        <p id="risk" class="metric-value">0</p>
+                        <p class="metric-footnote">Weighted exposure across current findings</p>
+                    </article>
+
+                    <article class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-label">CIS Compliance</span>
+                            <span class="info-icon" tabindex="0"
+                                data-tooltip="CIS score estimates benchmark alignment using weighted penalties from the detected findings.">i</span>
+                        </div>
+                        <p id="cisScore" class="metric-value">0</p>
+                        <p class="metric-footnote">Estimated benchmark alignment</p>
+                    </article>
+
+                    <article class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-label">Total Issues</span>
+                        </div>
+                        <p id="total" class="metric-value">0</p>
+                        <p class="metric-footnote">Critical, high, and medium issues combined</p>
+                    </article>
+
+                    <article class="metric-card" id="securityCard">
+                        <div class="metric-header">
+                            <span class="metric-label">Security Level</span>
+                        </div>
+                        <p id="level" class="metric-value">-</p>
+                        <p class="metric-footnote">Overall account posture for the last scan</p>
+                    </article>
+                </div>
+
+                <div class="panel-grid">
+                    <section class="panel chart-panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="eyebrow">Distribution</p>
+                                <h3>Severity Overview</h3>
+                            </div>
+                        </div>
+                        <canvas id="severityChart"></canvas>
+                    </section>
+
+                    <section class="panel chart-panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="eyebrow">Services</p>
+                                <h3>Issues by Service</h3>
+                            </div>
+                        </div>
+                        <canvas id="serviceChart"></canvas>
+                    </section>
+                </div>
+
+                <section class="panel breakdown-panel">
+                    <div class="panel-head">
+                        <div>
+                            <p class="eyebrow">Coverage</p>
+                            <h3>Control Health Breakdown</h3>
+                        </div>
+                    </div>
+                    <div id="cisBreakdown" class="breakdown-list"></div>
+                </section>
+
+                <section class="panel findings-panel">
+                    <div class="panel-head panel-head-spread">
+                        <div>
+                            <p class="eyebrow">Findings</p>
+                            <h3>Misconfiguration Review</h3>
+                        </div>
+
+                        <div class="filters">
+                            <label class="filter-field">
+                                <span>Severity</span>
+                                <select id="severityFilter" onchange="loadDashboard()">
+                                    <option value="">All severities</option>
+                                    <option value="CRITICAL">Critical</option>
+                                    <option value="HIGH">High</option>
+                                    <option value="MEDIUM">Medium</option>
+                                </select>
+                            </label>
+
+                            <label class="filter-field filter-search">
+                                <span>Search resource</span>
+                                <input type="text" id="searchInput" placeholder="IAM role, bucket, instance..." oninput="loadDashboard()">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="table-shell">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Service</th>
+                                    <th>Resource</th>
+                                    <th>Issue</th>
+                                    <th>Severity</th>
+                                    <th>Region</th>
+                                    <th>Recommendation</th>
+                                </tr>
+                            </thead>
+                            <tbody id="findingsTable"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <section id="historySection" class="hidden">
+                <section class="panel history-panel">
+                    <div class="panel-head">
+                        <div>
+                            <p class="eyebrow">Trend</p>
+                            <h3>Recent Scan History</h3>
+                        </div>
+                    </div>
+                    <div class="table-shell">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Scan Time</th>
+                                    <th>Risk Score</th>
+                                    <th>CIS Score</th>
+                                    <th>Security Level</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTable"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <footer class="footer">
+                <span>&copy; 2026 SecureCloud</span>
+               // <span>Built by Md Shahnwaz</span>
+            </footer>
+        </main>
+    </div>
+
+    <div id="recommendationModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <div class="modal-header">
+                <div>
+                    <p class="eyebrow">Guidance</p>
+                    <h3 id="modalTitle">Security Recommendation</h3>
+                </div>
+                <button class="icon-btn close-btn" type="button" onclick="closeModal()" aria-label="Close recommendation">
+                    x
+                </button>
+            </div>
+            <div class="modal-body" id="modalText"></div>
+            <div class="modal-footer">
+                <button class="secondary-btn" type="button" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cloudModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-content cloud-modal-card" role="dialog" aria-modal="true" aria-labelledby="cloudModalTitle">
+            <form id="cloudCredentialForm" onsubmit="saveCloudCredentials(event)">
+                <div class="modal-header">
+                    <div>
+                        <p class="eyebrow">Authentication</p>
+                        <h3 id="cloudModalTitle">Connect Cloud Account</h3>
+                    </div>
+                    <button class="icon-btn close-btn" type="button" onclick="closeCloudModal()" aria-label="Close cloud credential modal">
+                        x
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-grid">
+                        <label class="filter-field span-2">
+                            <span>Cloud Provider</span>
+                            <select id="cloudProvider" onchange="handleProviderChange()">
+                                <option value="AWS">AWS</option>
+                                <option value="AZURE">Azure</option>
+                                <option value="GCP">GCP</option>
+                            </select>
+                        </label>
+
+                        <div id="awsFields" class="provider-section span-2">
+                            <label class="filter-field">
+                                <span>AWS Access Key ID</span>
+                                <input id="awsAccessKeyId" type="text" autocomplete="off">
+                            </label>
+                            <label class="filter-field">
+                                <span>AWS Secret Access Key</span>
+                                <input id="awsSecretAccessKey" type="password" autocomplete="off">
+                            </label>
+                            <label class="filter-field span-2">
+                                <span>AWS Session Token (optional)</span>
+                                <input id="awsSessionToken" type="password" autocomplete="off">
+                            </label>
+                            <label class="filter-field">
+                                <span>Default Region</span>
+                                <input id="awsDefaultRegion" type="text" value="eu-north-1">
+                            </label>
+                        </div>
+
+                        <div id="azureFields" class="hidden provider-section span-2">
+                            <label class="filter-field">
+                                <span>Azure Tenant ID</span>
+                                <input id="azureTenantId" type="text" autocomplete="off">
+                            </label>
+                            <label class="filter-field">
+                                <span>Azure Client ID</span>
+                                <input id="azureClientId" type="text" autocomplete="off">
+                            </label>
+                            <label class="filter-field">
+                                <span>Azure Client Secret</span>
+                                <input id="azureClientSecret" type="password" autocomplete="off">
+                            </label>
+                            <label class="filter-field">
+                                <span>Azure Subscription ID</span>
+                                <input id="azureSubscriptionId" type="text" autocomplete="off">
+                            </label>
+                        </div>
+
+                        <div id="gcpFields" class="hidden provider-section span-2">
+                            <label class="filter-field">
+                                <span>GCP Project ID</span>
+                                <input id="gcpProjectId" type="text" autocomplete="off">
+                            </label>
+                            <label class="filter-field span-2">
+                                <span>Service Account JSON</span>
+                                <textarea id="gcpServiceAccountJson" rows="7" placeholder='{"type":"service_account", ...}'></textarea>
+                            </label>
+                        </div>
+                    </div>
+                    <p id="cloudAuthMessage" class="cloud-auth-message"></p>
+                </div>
+                <div class="modal-footer">
+                    <button class="secondary-btn" type="button" onclick="closeCloudModal()">Cancel</button>
+                    <button class="primary-btn" type="submit">Validate & Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/script.js?v=20260329-3"></script>
+</body>
+
+</html>
